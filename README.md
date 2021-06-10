@@ -22,13 +22,15 @@ Lilypad is a Node-based website that bypasses popular link redirectors and prote
 - won.pe*
 - general redirects (tested on bit.ly, tinyurl.com, goo.gl, youtu.be, ow.ly)
 
+[Examples found here](/docs/examples/README.md)
+
 ## tba sites
 - za.gl
 - fc.lc*
 - exey.io*
 
 ### note
-Websites marked with a * require an AntiCaptcha subscription. [Setup information can be found here](/setup/README.md).
+Websites marked with a * require an AntiCaptcha subscription. [Setup information can be found here](/docs/ac-setup/README.md).
 
 ## api endpoints
 Here are the current API endpoints for Lilypad.

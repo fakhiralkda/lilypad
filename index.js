@@ -473,7 +473,7 @@ function requestListner(request, response) {
                                     "Upgrade-Insecure-Requests": "1"
                                 }
                             }).then(function(resp) {
-                                var $ = cheerio.load(resp);
+                                var $ = cheerio.load(resp.body);
                                 var j = JSON.stringify({
                                     "success": true,
                                     "url": $("#showSkip .skip")[0].attribs.href
@@ -503,7 +503,6 @@ function requestListner(request, response) {
                         case "ouo.io":
                         case "ouo.press":
                             if (fs.existsSync(__dirname + "/config.json")) {
-                                ac.setAPIKey(JSON.parse(fs.readFileSync(__dirname + "/config.json")).key);
                                 got(requestedUrl.href, {
                                     headers: {
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -527,11 +526,13 @@ function requestListner(request, response) {
                                             continue;
                                         }
                                     }
+                                    ac.setAPIKey(JSON.parse(fs.readFileSync(__dirname + "/config.json")).key);
                                     ac.shutUp();
                                     ac.solveRecaptchaV2Proxyless(requestedUrl.href, sk).then(function(resp) {
                                         var b = "_token=" + $("#form-captcha [name=_token]").val() + "&x-token=" + resp + "&v-token=" + $("#v-token").val();
                                         var nu = "https://" + requestedUrl.hostname + "/go" + requestedUrl.pathname;
                                         got.post(nu, {
+                                            followRedirect: false,
                                             body: b,
                                             headers: {
                                                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -553,24 +554,23 @@ function requestListner(request, response) {
                                                 "TE": "Trailers"
                                             }   
                                         }).then(function(resp) {
-                                            if (resp.url !== nu) {
+                                            if (resp.headers.location) {
                                                 response.writeHead(200, {
                                                     "Access-Control-Allow-Origin": "*",
                                                     "Content-Type": "application/json"
                                                 });
                                                 var j = JSON.stringify({
                                                     "success": true,
-                                                    "url": error.response.url
+                                                    "url": resp.headers.location
                                                 });
                                                 response.end(j);
                                                 return;
                                             }
                                             var $ = cheerio.load(resp.body);
-                                            console.log(resp.headers)
-                                            var co = combineCook(coo, nc);
                                             var b2 = "_token=" + $("#form-go [name=_token]").val() + "&x-token=" + $("#x-token").val();
                                             got.post($("#form-go").attr("action"), {
                                                 body: b2,
+                                                followRedirect: false,
                                                 headers: {
                                                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
                                                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -582,7 +582,7 @@ function requestListner(request, response) {
                                                     "Origin": "https://" + requestedUrl.hostname,
                                                     "DNT": "1",
                                                     "Connection": "keep-alive",
-                                                    "Cookie": co,
+                                                    "Cookie": coo,
                                                     "Upgrade-Insecure-Requests": "1",
                                                     "Sec-Fetch-Dest": "document",
                                                     "Sec-Fetch-Mode": "navigate",
@@ -591,16 +591,17 @@ function requestListner(request, response) {
                                                     "TE": "Trailers"
                                                 }
                                             }).then(function(resp) {
-                                                if (resp.url !== $("form").attr("action")) {
+                                                if (resp.headers.location) {
                                                     response.writeHead(200, {
                                                         "Access-Control-Allow-Origin": "*",
                                                         "Content-Type": "application/json"
                                                     });
                                                     var j = JSON.stringify({
                                                         "success": true,
-                                                        "url": resp.url
+                                                        "url": resp.headers.location
                                                     });
                                                     response.end(j);
+                                                    return;
                                                 } else {
                                                     response.writeHead(500, {
                                                         "Access-Control-Allow-Origin": "*",
@@ -616,44 +617,6 @@ function requestListner(request, response) {
                                                     response.end(j);
                                                 }
                                             }).catch(function(error) {
-                                                if (error.response && error.response.url !== $("form").attr("action")) {
-                                                    response.writeHead(200, {
-                                                        "Access-Control-Allow-Origin": "*",
-                                                        "Content-Type": "application/json"
-                                                    });
-                                                    var j = JSON.stringify({
-                                                        "success": true,
-                                                        "url": error.response.url
-                                                    });
-                                                    response.end(j);
-                                                } else {
-                                                    response.writeHead(500, {
-                                                        "Access-Control-Allow-Origin": "*",
-                                                        "Content-Type": "application/json"
-                                                    });
-                                                    var j = JSON.stringify({
-                                                        "success": false,
-                                                        "err": {
-                                                            "code": error.code,
-                                                            "stack": error.stack,
-                                                            "message": error.message
-                                                        }
-                                                    });
-                                                    response.end(j);
-                                                }
-                                            });
-                                        }).catch(function(error) {
-                                            if (error.response && error.response.url !== $("form").attr("action")) {
-                                                response.writeHead(200, {
-                                                    "Access-Control-Allow-Origin": "*",
-                                                    "Content-Type": "application/json"
-                                                });
-                                                var j = JSON.stringify({
-                                                    "success": true,
-                                                    "url": error.response.url
-                                                });
-                                                response.end(j);
-                                            } else {
                                                 response.writeHead(500, {
                                                     "Access-Control-Allow-Origin": "*",
                                                     "Content-Type": "application/json"
@@ -667,7 +630,21 @@ function requestListner(request, response) {
                                                     }
                                                 });
                                                 response.end(j);
-                                            }
+                                            });
+                                        }).catch(function(error) {
+                                            response.writeHead(500, {
+                                                "Access-Control-Allow-Origin": "*",
+                                                "Content-Type": "application/json"
+                                            });
+                                            var j = JSON.stringify({
+                                                "success": false,
+                                                "err": {
+                                                    "code": error.code,
+                                                    "stack": error.stack,
+                                                    "message": error.message
+                                                }
+                                            });
+                                            response.end(j);
                                         });
                                     }).catch(function(error) {
                                         response.writeHead(500, {
