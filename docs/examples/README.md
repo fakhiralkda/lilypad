@@ -13,8 +13,11 @@ Should these links not work, either the method used was patched or the managers 
 - [adf.ly](http://fumacrom.com/m4Ry)
 - [ouo.io](https://ouo.io/s5ofFB) / [ouo.press](http://ouo.press/s5ofFB)
 - [ity.im](http://ity.im/O8f2S)
+- [exe.io](https://exe.io/pNmQNbB)*
 - [bit.ly](https://bit.ly/3gtE5i3)
 - [tinyurl.com](https://tinyurl.com/2w64k9kf)
+
+```* - Doesn't work yet (only for testing / debugging)```
 
 ## Unofficial Examples
 These were either taken from places on the web or they are examples from the site itself.
