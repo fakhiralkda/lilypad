@@ -5,7 +5,9 @@ Lilypad is a Node-based website that bypasses popular link redirectors and prote
 - Completely unlicensed, free code.
 - Open JSON API for developers.
 - Regularly updated, new redirects are constantly added.
-- Easily self-hostable, even compatible with Heroku.
+- Easily self-hostable, even compatible with Heroku*.
+
+```* - Hosting on services like Repl and Heroku means certain sites will not work because they are on IPs that are commonly used to bruteforce these services.```
 
 ## currently supported
 - adshrink.it
@@ -29,8 +31,7 @@ Lilypad is a Node-based website that bypasses popular link redirectors and prote
 - fc.lc*
 - exey.io*
 
-### note
-Websites marked with a * require an AntiCaptcha subscription. [Setup information can be found here](/docs/ac-setup/README.md).
+```* - Requires an AntiCaptcha subscription. [Setup information can be found here](/docs/ac-setup/README.md).```
 
 ## api endpoints
 Here are the current API endpoints for Lilypad.
