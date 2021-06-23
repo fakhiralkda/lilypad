@@ -1,6 +1,8 @@
 # lilypad
 Lilypad is a Node-based website that bypasses popular link redirectors and protectors.
 
+[Official Instance](https://lp.nrmn.top) | [Heroku Instance](https://bypass-with-lilypad.herokuapp.com)
+
 ## features
 - Completely unlicensed, free code.
 - Open JSON API for developers.
@@ -18,10 +20,11 @@ Lilypad is a Node-based website that bypasses popular link redirectors and prote
 - shortconnect.com
 - boost.ink (& aliases)
 - adfoc.us
-- adf.ly (& aliases)
+- adf.ly (& aliases) / adult.xyz (& aliases)
 - ouo.io* / ouo.press*
 - ity.im
 - won.pe*
+- tii.ai / tei.ai
 - general redirects (tested on bit.ly, tinyurl.com, goo.gl, youtu.be, ow.ly)
 
 [Examples found here](/docs/examples/README.md)
@@ -31,7 +34,7 @@ Lilypad is a Node-based website that bypasses popular link redirectors and prote
 - fc.lc*
 - exey.io*
 
-```* - Requires an AntiCaptcha subscription. [Setup information can be found here](/docs/ac-setup/README.md).```
+```* - Requires an AntiCaptcha subscription. [Setup information can be found here](/docs/config/README.md).```
 
 ## api endpoints
 Here are the current API endpoints for Lilypad.
@@ -42,6 +45,7 @@ The endpoint to get the URL of a tracker/protected link.
 **Parameters**
 
 - ``url`` (required) - base-64 *and* URI encoded URL
+- ``ignoreBypass`` - ignores cache/archived urls of previous successful attempts of bypassing, only set to ``true`` if the result is inaccurate.
 
 ```
 http://localhost:32333/api/bypass?url=aHR0cHM6Ly90aW55dXJsLmNvbS8zNXVqbmRrZQ==
@@ -55,7 +59,8 @@ http://localhost:32333/api/bypass?url=aHR0cHM6Ly90aW55dXJsLmNvbS8zNXVqbmRrZQ==
 ```json
 {
     "success": true,
-    "url": "https://github.com/"
+    "url": "https://github.com/",
+    "fromArchive": true
 }
 ```
 

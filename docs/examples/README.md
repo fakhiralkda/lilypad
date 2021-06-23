@@ -10,7 +10,7 @@ Should these links not work, either the method used was patched or the managers 
 - [sub2unlock.net](https://sub2unlock.net//vx8R0)
 - [shortconnect.com](https://shortconnect.com//43419)
 - [boost.ink](https://boost.ink/i3gh)
-- [adf.ly](http://fumacrom.com/m4Ry)
+- [adf.ly](http://fumacrom.com/m4Ry) / [adult.xyz](http://taraa.xyz/3aCj)
 - [ouo.io](https://ouo.io/s5ofFB) / [ouo.press](http://ouo.press/s5ofFB)
 - [ity.im](http://ity.im/O8f2S)
 - [exe.io](https://exe.io/pNmQNbB)*

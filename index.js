@@ -5,11 +5,31 @@ const fs = require("fs");
 const { parse } = require("url");
 const ac = require("@antiadmin/anticaptchaofficial");
 const port = process.env.PORT || 32333;
-if (process.env.ACKEY) {
+if (process.env.ACKEY && !fs.existsSync(__dirname + "/config.json")) {
+    if (process.env.NOARCHIVE == "true") {
+        fs.writeFileSync(__dirname + "/config.json", JSON.stringify({
+            "key": process.env.ACKEY,
+            "antiCaptcha": true,
+            "archiveLinks": false 
+        }));
+    } else {
+        fs.writeFileSync(__dirname + "/config.json", JSON.stringify({
+            "key": process.env.ACKEY,
+            "antiCaptcha": true,
+            "archiveLinks": true
+        }));
+    }
+} else if (process.env.NOARCHIVE == "true" && !fs.existsSync(__dirname + "/config.json")) {
     fs.writeFileSync(__dirname + "/config.json", JSON.stringify({
-        "key": process.env.ACKEY
+        "key": "",
+        "antiCaptcha": false,
+        "archiveLinks": false
     }));
+} else if (!fs.existsSync(__dirname + "/config.json")){
+    fs.copyFileSync(__dirname + "/config.example.json", __dirname + "/config.json");
 }
+
+const config = JSON.parse(fs.readFileSync(__dirname + "/config.json"));
 
 http.createServer(requestListner).listen(port);
 console.log("[i] listening on port " + port);
@@ -23,10 +43,45 @@ function requestListner(request, response) {
                 if (url.query.url) {
                     var u = Buffer.from(url.query.url, "base64").toString("ascii");
                     var requestedUrl = parse(u, true);
+
                     if (requestedUrl.protocol == "https:" && requestedUrl.hostname == "ow.ly") {
                         var u = "http" + u.substring(5);
                         var requestedUrl = parse(u, true);
                     }
+
+                    if (config.archiveLinks == true && !fs.existsSync(__dirname + "/archive.json")) {
+                        fs.writeFileSync(__dirname + "/archive.json", JSON.stringify([]));
+                    } else if (fs.existsSync(__dirname + "/archive.json") && !url.query.ignoreArchive || url.query.ignoreArchive !== "true") {
+                        var j = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                        for (var c in j) {
+                            if (j[c].original == requestedUrl.href) {
+                                var j = JSON.stringify({
+                                    success: true,
+                                    fromArchive: true,
+                                    url: j[c].dest
+                                });
+                                response.writeHead(200, {
+                                    "Content-Type": "application/json",
+                                    "Access-Control-Allow-Origin": "*"
+                                });
+                                response.end(j);
+                                return;
+                            } else {
+                                continue;
+                            }
+                        }
+                    } else if (fs.existsSync(__dirname + "/archive.json")) {
+                        var j = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                        var nj = [];
+                        for (var c in j) {
+                            if (j[c].original == requestedUrl.href) {
+                                continue;
+                            } else {
+                                nj.push(j[c]);
+                            }
+                        }
+                    }
+
                     switch(requestedUrl.hostname) {
                         case "adshrink.it":
                             got(requestedUrl.href, {
@@ -57,8 +112,17 @@ function requestListner(request, response) {
                                                 "Content-Type": "application/json",
                                                 "Access-Control-Allow-Origin": "*"
                                             });
+                                            if (config.archiveLinks == true) {
+                                                var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                                a.push({
+                                                    "original": requestedUrl.href,
+                                                    "dest": json.url
+                                                });
+                                                fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                            }
                                             var j = JSON.stringify({
                                                 "success": true,
+                                                "fromArchive": false,
                                                 "url": json
                                             });
                                             response.end(j);
@@ -132,8 +196,17 @@ function requestListner(request, response) {
                                         "Content-Type": "application/json",
                                         "Access-Control-Allow-Origin": "*"
                                     });
+                                    if (config.archiveLinks == true) {
+                                        var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                        a.push({
+                                            "original": requestedUrl.href,
+                                            "dest": json.data.target
+                                        });
+                                        fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                    }
                                     var j = JSON.stringify({
                                         "success": true,
+                                        "fromArchive": false,
                                         "url": json.data.target
                                     });
                                     response.end(j);
@@ -188,8 +261,17 @@ function requestListner(request, response) {
                                 r = r.split("\\").join("");
                                 var j = JSON.stringify({
                                     "success": true,
+                                    "fromArchive": false,
                                     "url": r
                                 });
+                                if (config.archiveLinks == true) {
+                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                    a.push({
+                                        "original": requestedUrl.href,
+                                        "dest": r
+                                    });
+                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                }
                                 response.writeHead(200, {
                                     "Access-Control-Allow-Origin": "*",
                                     "Content-Type": "application/json"
@@ -244,8 +326,17 @@ function requestListner(request, response) {
                                         "DNT": "1"
                                     }
                                 }).then(function(resp) {
+                                    if (config.archiveLinks == true) {
+                                        var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                        a.push({
+                                            "original": requestedUrl.href,
+                                            "dest": resp.body
+                                        });
+                                        fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                    }
                                     var j = JSON.stringify({
                                         "success": true,
+                                        "fromArchive": false,
                                         "url": resp.body
                                     });
                                     response.writeHead(200, {
@@ -303,8 +394,17 @@ function requestListner(request, response) {
                                 var $ = cheerio.load(resp.body);
                                 var j = JSON.stringify({
                                     "success": true,
+                                    "fromArchive": false,
                                     "url": $("#theGetLink").text()
                                 });
+                                if (config.archiveLinks == true) {
+                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                    a.push({
+                                        "original": requestedUrl.href,
+                                        "dest": $("#theGetLink").text()
+                                    });
+                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                }
                                 response.writeHead(200, {
                                     "Access-Control-Allow-Origin": "*",
                                     "Content-Type": "application/json"
@@ -343,8 +443,17 @@ function requestListner(request, response) {
                                 var $ = cheerio.load(resp.body);
                                 var j = JSON.stringify({
                                     "success": true,
+                                    "fromArchive": false,
                                     "url": $("#loader-link")[0].attribs.href
                                 });
+                                if (config.archiveLinks == true) {
+                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                    a.push({
+                                        "original": requestedUrl.href,
+                                        "dest": $("#loader-link")[0].attribs.href
+                                    });
+                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                }
                                 response.writeHead(200, {
                                     "Access-Control-Allow-Origin": "*",
                                     "Content-Type": "application/json"
@@ -393,8 +502,17 @@ function requestListner(request, response) {
                                         r = r.toString("ascii");
                                         var j = JSON.stringify({
                                             "success": true,
+                                            "fromArchive": false,
                                             "url": r
                                         });
+                                        if (config.archiveLinks == true) {
+                                            var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                            a.push({
+                                                "original": requestedUrl.href,
+                                                "dest": r
+                                            });
+                                            fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                        }
                                         response.writeHead(200, {
                                             "Access-Control-Allow-Origin": "*",
                                             "Content-Type": "application/json"
@@ -437,8 +555,17 @@ function requestListner(request, response) {
                                 var r = $("a").attr("href");
                                 var j = JSON.stringify({
                                     "success": true,
+                                    "fromArchive": false,
                                     "url": r
                                 });
+                                if (config.archiveLinks == true) {
+                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                    a.push({
+                                        "original": requestedUrl.href,
+                                        "dest": r
+                                    });
+                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                }
                                 response.writeHead(200, {
                                     "Access-Control-Allow-Origin": "*",
                                     "Content-Type": "application/json"
@@ -476,8 +603,17 @@ function requestListner(request, response) {
                                 var $ = cheerio.load(resp.body);
                                 var j = JSON.stringify({
                                     "success": true,
+                                    "fromArchive": false,
                                     "url": $("#showSkip .skip")[0].attribs.href
                                 });
+                                if (config.archiveLinks == true) {
+                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                    a.push({
+                                        "original": requestedUrl.href,
+                                        "dest": $("#showSkip .skip")[0].attribs.href
+                                    });
+                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                }
                                 response.writeHead(200, {
                                     "Access-Control-Allow-Origin": "*",
                                     "Content-Type": "application/json"
@@ -502,7 +638,7 @@ function requestListner(request, response) {
 
                         case "ouo.io":
                         case "ouo.press":
-                            if (fs.existsSync(__dirname + "/config.json")) {
+                            if (config.antiCaptcha == true) {
                                 got(requestedUrl.href, {
                                     headers: {
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -526,7 +662,7 @@ function requestListner(request, response) {
                                             continue;
                                         }
                                     }
-                                    ac.setAPIKey(JSON.parse(fs.readFileSync(__dirname + "/config.json")).key);
+                                    ac.setAPIKey(config.key);
                                     ac.shutUp();
                                     ac.solveRecaptchaV2Proxyless(requestedUrl.href, sk).then(function(resp) {
                                         var b = "_token=" + $("#form-captcha [name=_token]").val() + "&x-token=" + resp + "&v-token=" + $("#v-token").val();
@@ -561,8 +697,17 @@ function requestListner(request, response) {
                                                 });
                                                 var j = JSON.stringify({
                                                     "success": true,
+                                                    "fromArchive": false,
                                                     "url": resp.headers.location
                                                 });
+                                                if (config.archiveLinks == true) {
+                                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                                    a.push({
+                                                        "original": requestedUrl.href,
+                                                        "dest": resp.headers.location
+                                                    });
+                                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                                }
                                                 response.end(j);
                                                 return;
                                             }
@@ -598,8 +743,17 @@ function requestListner(request, response) {
                                                     });
                                                     var j = JSON.stringify({
                                                         "success": true,
+                                                        "fromArchive": false,
                                                         "url": resp.headers.location
                                                     });
+                                                    if (config.archiveLinks == true) {
+                                                        var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                                        a.push({
+                                                            "original": requestedUrl.href,
+                                                            "dest": resp.headers.location
+                                                        });
+                                                        fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                                    }
                                                     response.end(j);
                                                     return;
                                                 } else {
@@ -691,7 +845,7 @@ function requestListner(request, response) {
                         return;
 
                         case "won.pe":
-                            if (fs.existsSync(__dirname + "/config.json")) {
+                            if (config.antiCaptcha == true) {
                                 got(requestedUrl.href, {
                                     headers: {
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -721,7 +875,7 @@ function requestListner(request, response) {
                                             continue;
                                         }
                                     }
-                                    ac.setAPIKey(JSON.parse(fs.readFileSync(__dirname + "/config.json")).key);
+                                    ac.setAPIKey(config.key);
                                     ac.shutUp();
                                     ac.solveRecaptchaV2Proxyless(requestedUrl.href, sk).then(function(resp) {
                                         var p = "response=" + resp + "&ads=" + ads + "&lid=" + lid + "&vid=" + vid + "&token=" + token + "&adblock=" + adb + "&referer=&push=";
@@ -750,8 +904,21 @@ function requestListner(request, response) {
                                             if (rj.url) {
                                                 var j = JSON.stringify({
                                                     "success": true,
+                                                    "fromArchive": false,
                                                     "url": rj.url
                                                 });
+                                                response.writeHead(200, {
+                                                    "Access-Control-Allow-Origin": "*",
+                                                    "Content-Type": "application/json"
+                                                });
+                                                if (config.archiveLinks == true) {
+                                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                                    a.push({
+                                                        "original": requestedUrl.href,
+                                                        "dest": rj.url
+                                                    });
+                                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                                }
                                                 response.end(j);
                                             } else {
                                                 response.writeHead(500, {
@@ -841,8 +1008,17 @@ function requestListner(request, response) {
                                 var $ = cheerio.load(resp.body);
                                 var j = JSON.stringify({
                                     "success": true,
+                                    "fromArchive": false,
                                     "url": $(".col-md-4:not(#logo_div) a")[0].attribs.href
                                 });
+                                if (config.archiveLinks == true) {
+                                    var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                    a.push({
+                                        "original": requestedUrl.href,
+                                        "dest": $(".col-md-4:not(#logo_div) a")[0].attribs.href
+                                    });
+                                    fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                }
                                 response.writeHead(200, {
                                     "Access-Control-Allow-Origin": "*",
                                     "Content-Type": "application/json"
@@ -866,7 +1042,7 @@ function requestListner(request, response) {
                         return;
 
                         case "fc.lc":
-                            if (fs.existsSync(__dirname + "/config.json")) {
+                            if (config.antiCaptcha == true) {
                                 got(requestedUrl.href, {
                                     headers: {
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -943,7 +1119,7 @@ function requestListner(request, response) {
                                                 for (var c in resp.headers["set-cookie"]) {
                                                     var coo = coo + resp.headers["set-cookie"][c].split("; ")[0] + "; ";
                                                 }
-                                                ac.setAPIKey(JSON.parse(fs.readFileSync(__dirname + "/config.json")).key);
+                                                ac.setAPIKey(config.key);
                                                 ac.shutUp();
                                                 ac.solveRecaptchaV2Proxyless(resp.url, sk).then(function(resp) {
                                                     var afd = encodeURIComponent($("form [name='ad_form_data']").val());
@@ -1116,7 +1292,7 @@ function requestListner(request, response) {
 
                         case "exe.io":
                         case "exey.io":
-                            if (fs.existsSync(__dirname + "/config.json")) {
+                            if (config.antiCaptcha == true) {
                                 got(requestedUrl.href, {
                                     headers: {
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
@@ -1179,7 +1355,7 @@ function requestListner(request, response) {
                                                     var sk = $("script")[c].children[0].data.split('"invisible_reCAPTCHA_site_key":"')[1].split('"')[0];
                                                 }
                                             }
-                                            ac.setAPIKey(JSON.parse(fs.readFileSync(__dirname + "/config.json")).key);
+                                            ac.setAPIKey(config.key);
                                             ac.shutUp();
                                             ac.solveRecaptchaV2Proxyless(resp.url, sk).then(function(resp) {
                                                 console.log(ac.getCookies());
@@ -1290,6 +1466,82 @@ function requestListner(request, response) {
                             }
                         return;
 
+                        case "tii.ai":
+                        case "tei.ai":
+                            if (config.antiCaptcha) {
+                                got(requestedUrl.href, {
+                                    headers: {
+                                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
+                                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                                        "Accept-Language": "en-US",
+                                        "Accept-Encoding": "gzip, deflate, br",
+                                        "DNT": "1",
+                                        "Connection": "keep-alive",
+                                        "Upgrade-Insecure-Requests": "1",
+                                        "Sec-Fetch-Dest": "document",
+                                        "Sec-Fetch-Mode": "navigate",
+                                        "Sec-Fetch-Site": "none",
+                                        "Sec-Fetch-User": "?1",
+                                        "Sec-GPC": "1",
+                                        "Cache-Control": "max-age=0",
+                                        "TE": "trailers"
+                                    }
+                                }).then(function(resp) {
+                                    var $ = cheerio.load(resp.body);
+                                    var tk = $("#link-view form [name='token']").val();
+                                    tk = tk.split("aHR").slice(1).join("aHR");
+                                    tk = "aHR" + tk;
+                                    tk = Buffer.from(tk, "base64").toString("utf-8");
+                                    var j = JSON.stringify({
+                                        "success": true,
+                                        "fromArchive": false,
+                                        "url": tk
+                                    });
+                                    if (config.archiveLinks == true) {
+                                        var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                        a.push({
+                                            "original": requestedUrl.href,
+                                            "dest": tk
+                                        });
+                                        fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                    }
+                                    response.writeHead(200, {
+                                        "Access-Control-Allow-Origin": "*",
+                                        "Content-Type": "application/json"
+                                    });
+                                    response.end(j);
+                                }).catch(function(error) {
+                                    response.writeHead(500, {
+                                        "Access-Control-Allow-Origin": "*",
+                                        "Content-Type": "application/json"
+                                    });
+                                    var j = JSON.stringify({
+                                        "success": false,
+                                        "err": {
+                                            "code": error.code,
+                                            "stack": error.stack,
+                                            "message": error.message
+                                        }
+                                    });
+                                    response.end(j);
+                                });
+                            } else {
+                                response.writeHead(500, {
+                                    "Access-Control-Allow-Origin": "*",
+                                    "Content-Type": "application/json"
+                                });
+                                var j = JSON.stringify({
+                                    "success": false,
+                                    "err": {
+                                        "code": "noACKey",
+                                        "message": "No Anti-Captcha key was provided by the instance owner."
+                                    }
+                                });
+                                response.end(j);
+                            }
+                        return;
+                            
+
                         default:
                             got(requestedUrl.href, {
                                 headers: {
@@ -1330,17 +1582,25 @@ function requestListner(request, response) {
                                             }
                                         }
                                     }
-                                    r = a.join('')
-                                    r = Buffer.from(r, 'base64').toString('ascii');
+                                    r = a.join("")
+                                    r = Buffer.from(r, "base64").toString("ascii");
                                     r = r.substring(r.length - (r.length - 16));
                                     r = r.substring(0, r.length - 16);
                                     if (new URL(r).search.includes("dest=")) {
-                                        r = decodeURIComponent(r.split('dest=')[1]);
+                                        r = decodeURIComponent(r.split("dest=")[1]);
                                     }
                                     response.writeHead(200, {
                                         "Access-Control-Allow-Origin": "*",
                                         "Content-Type": "application/json"
                                     });
+                                    if (config.archiveLinks == true) {
+                                        var ar = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                        ar.push({
+                                            "original": requestedUrl.href,
+                                            "dest": r
+                                        });
+                                        fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(ar));
+                                    }
                                     var j = JSON.stringify({
                                         "success": true,
                                         "url": r
@@ -1349,6 +1609,14 @@ function requestListner(request, response) {
                                 } else if (resp.url == u) {
                                     if (resp.redirects !== undefined && resp.redirects.length > 0) {
                                         var r = resp.redirects[resp.redirects.length - 1];
+                                        if (config.archiveLinks == true) {
+                                            var a = JSON.parse(fs.readFileSync(__dirname + "/archive.json"));
+                                            a.push({
+                                                "original": requestedUrl.href,
+                                                "dest": r
+                                            });
+                                            fs.writeFileSync(__dirname + "/archive.json", JSON.stringify(a));
+                                        }
                                         response.writeHead(200, {
                                             "Access-Control-Allow-Origin": "*",
                                             "Content-Type": "application/json"
