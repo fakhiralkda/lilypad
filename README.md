@@ -32,7 +32,7 @@ Lilypad is a website that bypasses popular ad-links redirectors and protectors.
 ## tba sites
 - za.gl
 - fc.lc*
-- exe.io / exey.io*
+- exe.io* / exey.io*
 
 ```* - Requires an AntiCaptcha subscription. [Setup information can be found here](/docs/config/README.md).```
 
