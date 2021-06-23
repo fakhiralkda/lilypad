@@ -1,5 +1,5 @@
 # lilypad
-Lilypad is a Node-based website that bypasses popular link redirectors and protectors.
+Lilypad is a website that bypasses popular ad-links redirectors and protectors.
 
 [Official Instance](https://lp.nrmn.top) | [Heroku Instance](https://bypass-with-lilypad.herokuapp.com)
 
@@ -36,26 +36,23 @@ Lilypad is a Node-based website that bypasses popular link redirectors and prote
 
 ```* - Requires an AntiCaptcha subscription. [Setup information can be found here](/docs/config/README.md).```
 
-## api endpoints
-Here are the current API endpoints for Lilypad.
+## api reference
 
-### GET ``/api/bypass``
-The endpoint to get the URL of a tracker/protected link. 
+### bypass urls
 
-**Parameters**
-
-- ``url`` (required) - base-64 *and* URI encoded URL
-- ``ignoreBypass`` - ignores cache/archived urls of previous successful attempts of bypassing, only set to ``true`` if the result is inaccurate.
-
-```
-http://localhost:32333/api/bypass?url=aHR0cHM6Ly90aW55dXJsLmNvbS8zNXVqbmRrZQ==
+```http
+  GET /api/bypass
 ```
 
-*Example link redirects to [https://github.com/](https://github.com)*.
+| Parameter      | Type     | Description                                                                                |
+| :------------- | :------- | :----------------------------------------------------------------------------------------- |
+| `url`          | `string` | **Required**. Base 64/URI encoded URL to bypass.                                           |
+| `ignoreBypass` | `string` | Ignores cache of previous attempts to bypass the URL, only use if the result is incorrect. |
 
-**Response**
+#### Response
 
-***Successful Run***
+**Successful response**:
+
 ```json
 {
     "success": true,
@@ -64,16 +61,34 @@ http://localhost:32333/api/bypass?url=aHR0cHM6Ly90aW55dXJsLmNvbS8zNXVqbmRrZQ==
 }
 ```
 
-``success`` tells you if the task succeeded or not.
+`success` is whether or not the process succeeded, in this instance - it's `true`.
 
-If ``success`` is ``true``, it will give you a ``url`` variable, linking to the result.
+`url` contains the URL Lilypad found.
 
-If ``success`` is ``false``, the response will contain an ``err`` object, containing a message, code, and stack - if the error has them.
+`fromArchive` shows whether or not it was from a previously cached bypass.
 
+**Unsuccessful response**:
+
+```json
+{
+    "success": false,
+    "err": {
+        "stack": "HTTPError: Response code 403 (Forbidden)\n    at Request.<anonymous> (/app/node_modules/got/dist/source/as-promise/index.js:117:42)\n    at processTicksAndRejections (internal/process/task_queues.js:95:5)"
+        "message": "Response code 403 (Forbidden)"
+        "code": "HTTPError"
+    }
+}
+```
+
+`success` is whether or not the process succeeded, in this instance - it's `false`.
+
+`err` is an object that has `stack`, `message` and `code` strings, sometimes certain strings are missing.
 
 ## special thanks
-This was inspired by [Universal Bypass](https://universal-bypass.org/) and some code on the server was adapted from it.
+- This was inspired by [Universal Bypass](https://universal-bypass.org/) and some code on the server was adapted from it.
 
-Some code was also used from an attempt of this project a bit farther back - [here](https://github.com/normanlol/bypass-api).
+- [README.so](https://readme.so/) was partially used to generate this README.
 
-This project is also possible thanks to [AntiCaptcha](http://getcaptchasolution.com/rpsgehhafa) (uses referal link).
+- Some code was also used from an attempt of this project a bit farther back - [here](https://github.com/normanlol/bypass-api).
+
+- This project is also possible thanks to [AntiCaptcha](http://getcaptchasolution.com/rpsgehhafa) (uses referal link).
