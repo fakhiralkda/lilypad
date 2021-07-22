@@ -10,6 +10,9 @@ h2, p {
 }
 
 input, button {
-    margin: 0 auto;
     font-family:Helvetica;
+}
+
+input#url {
+  margin: 0 auto;
 }
