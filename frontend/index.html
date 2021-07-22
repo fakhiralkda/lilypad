@@ -1,12 +1,29 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Lilypad</title>
-        <link href="style.css" rel="stylesheet">
-        <meta charset="UTF-8">
-    </head>
-    <body onhashchange='document.getElementById("url").value = window.location.hash.substring(1); bypass();'>
-        <h2>Lilypad</h2>
+<html lang="en">
+  <head>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👀</text></svg>"
+    />
+    <!--    replace with cdn address-->
+    <link rel="stylesheet" href="https://andybrewer.github.io/mvp/mvp.css" />
+
+    <meta charset="utf-8" />
+    <!--    keywords-->
+    <meta
+      name="keywords"
+      content="universal-bypass, no-ads, bypass, free"
+    />
+    <!--    description-->
+    <meta name="description" content="404" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Lilypad</title>
+  </head>
+
+  <body onhashchange='document.getElementById("url").value = window.location.hash.substring(1); bypass();'>
+        <header>
+        <h1>Lilypad</h1>
         <p>Bypass tracking or ad-infested link shorteners.</p>
         <noscript>
             <i>
@@ -28,6 +45,8 @@
             </div>
         </div>
         <i>This is open-sourced! You can find the code <a rel="noreferrer" href="https://github.com/normanlol/lilypad">here</a>.</i>
+        <i>Modified by <a rel="noreferrer" href="https://github.com/rzlamrr">rzlamrr</a>.</i>
+        </header>
     </body>
     <script src="app.js"></script>
 </html>
