@@ -16,3 +16,9 @@ input, button {
 input#url {
   margin: 0 auto;
 }
+
+.center-block {
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+}
